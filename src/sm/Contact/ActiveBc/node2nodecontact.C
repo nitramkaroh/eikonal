@@ -40,9 +40,10 @@
 #include "floatmatrix.h"
 #include "unknownnumberingscheme.h"
 #include "sparsemtrx.h"
+#include "classfactory.h"
 
 namespace oofem {
-
+  REGISTER_BoundaryCondition(Node2NodePenaltyContact);
 
   IRResultType Node2NodePenaltyContact :: initializeFrom(InputRecord *ir)
   {
@@ -108,12 +109,13 @@ namespace oofem {
       return;
     }
 
-    IntArray dofIdArray = {D_u, D_v, D_w};
+    //    IntArray dofIdArray = {D_u, D_v, D_w};
+    IntArray dofIdArray = {D_u, D_v};
     IntArray r_loc, c_loc;
     FloatArray fm, fs;
     IntArray loc, masterdofids, bNodes;
     
-    Set *masterSet = this->giveDomain()->giveSet(this->set);
+    Set *masterSet = this->giveDomain()->giveSet(this->masterSet);
     Set *slaveSet = this->giveDomain()->giveSet(this->slaveSet);
 
     const IntArray &masterNodeList = masterSet->giveNodeList();
@@ -169,8 +171,8 @@ namespace oofem {
       normal.times(1.0/norm);
     }
     
-    slaveNode->giveUnknownVector(uS, {D_u, D_v, D_w}, VM_Total, tStep, true);
-    masterNode->giveUnknownVector(uM, {D_u, D_v, D_w}, VM_Total, tStep, true);
+    slaveNode->giveUnknownVector(uS, {D_u, D_v}, VM_Total, tStep, true);
+    masterNode->giveUnknownVector(uM, {D_u, D_v}, VM_Total, tStep, true);
     xs.add(uS);
     xm.add(uM);
     FloatArray dx = xs-xm;

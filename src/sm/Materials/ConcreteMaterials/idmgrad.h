@@ -68,8 +68,6 @@ protected:
 
     double di_rho;
     double di_eta;
-
-
 public:
     /// Constructor
     IsotropicGradientDamageMaterial(int n, Domain *d);

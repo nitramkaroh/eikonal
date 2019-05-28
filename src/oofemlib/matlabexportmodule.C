@@ -565,7 +565,7 @@ MatlabExportModule :: doOutputReactionForces(TimeStep *tStep,    FILE *FID)
                 int pos = eqnMap.findFirstIndexOf( num );
                 dofIDs.followedBy(dof->giveDofID());
                 if ( pos > 0 ) {
-                    fprintf(FID, "%e ", reactions.at(pos));
+		  fprintf(FID, "%e ", reactions.at(eqnMap.at(pos)));
                 } else {
                     fprintf( FID, "%e ", 0.0 ); // if not prescibed output zero
                 }

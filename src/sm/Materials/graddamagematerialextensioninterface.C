@@ -60,6 +60,14 @@ GradientDamageMaterialExtensionInterface :: giveGradientDamageStiffnessMatrix_dd
 {
     answer.clear();
 }
+
+
+void
+GradientDamageMaterialExtensionInterface :: giveGradientDamageStiffnessMatrix_du_BB(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep)
+{
+  answer.clear();
+}
+  
   
 
 IRResultType

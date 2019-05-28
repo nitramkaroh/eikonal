@@ -42,8 +42,7 @@
 
 ///@name Input fields for RankineMatGrad
 //@{
-#define _IFT_RankineMatGrad_Name "rankmatgrad"
-#define _IFT_RankineMatGrad_L "l"
+#define _IFT_RankineMatGrad_Name "rankinematgrad"
 #define _IFT_RankineMatGrad_m "m"
 #define _IFT_RankineMatGrad_negligibleDamage "negligible_damage"
 #define _IFT_RankineMatGrad_formulationType "formtype"
@@ -129,7 +128,6 @@ public:
     virtual void giveGradientDamageStiffnessMatrix_uu(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
     virtual void giveGradientDamageStiffnessMatrix_ud(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
     virtual void giveGradientDamageStiffnessMatrix_du(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
-    virtual void giveGradientDamageStiffnessMatrix_du_NB(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
     virtual void giveGradientDamageStiffnessMatrix_du_BB(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
     virtual void giveGradientDamageStiffnessMatrix_dd_NN(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
     virtual void giveGradientDamageStiffnessMatrix_dd_BB(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
@@ -146,7 +144,6 @@ public:
     virtual void givePlaneStressStiffMtrx(FloatMatrix & answer, MatResponseMode, GaussPoint * gp,  TimeStep * tStep);
     void givePlaneStressGprime(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
     void givePlaneStressKappaMatrix(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
-    void giveInternalLength(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
 
     virtual void computeCumPlastStrain(double &kappa, GaussPoint *gp, TimeStep *tStep);
     double giveNonlocalCumPlasticStrain(GaussPoint *gp);

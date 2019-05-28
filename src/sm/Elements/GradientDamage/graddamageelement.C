@@ -462,7 +462,7 @@ GradientDamageElement :: computeStiffnessMatrix_du(FloatMatrix &answer, MatRespo
     double dV;
     NLStructuralElement *elem = this->giveNLStructuralElement();
     FloatArray Nd;
-    FloatMatrix B, DduB, Ddu;
+    FloatMatrix Bd, Bu, DduB, Ddu, Ddu_BB;
     StructuralCrossSection *cs = elem->giveStructuralCrossSection();
 
     answer.clear();
@@ -476,27 +476,37 @@ GradientDamageElement :: computeStiffnessMatrix_du(FloatMatrix &answer, MatRespo
             OOFEM_ERROR("Material doesn't implement the required DpGrad interface!");
         }
 
-        elem->computeBmatrixAt(gp, B);
-        if ( nlGeo == 1 ) {
+        elem->computeBmatrixAt(gp, Bu);
+
+        /*if ( nlGeo == 1 ) {
             if ( elem->domain->giveEngngModel()->giveFormulation() == AL ) {
-                elem->computeBmatrixAt(gp, B);
+                elem->computeBmatrixAt(gp, Bu);
             } else {
-                elem->computeBHmatrixAt(gp, B);
+                elem->computeBHmatrixAt(gp, Bu);
             }
         }
-
+	*/
         gdmat->giveGradientDamageStiffnessMatrix_du(Ddu, rMode, gp, tStep);
         this->computeNdMatrixAt(gp, Nd);
         dV = elem->computeVolumeAround(gp);
         if ( Ddu.giveNumberOfRows() > 0 ) {
-            DduB.beTProductOf(Ddu, B);
+            DduB.beTProductOf(Ddu, Bu);
             FloatMatrix Ndm(Nd, true);
             answer.plusProductUnsym(Ndm, DduB, dV);
         } else {
             if ( answer.giveNumberOfColumns() == 0 ) {
-                answer.resize( Nd.giveSize(), B.giveNumberOfColumns() );
+                answer.resize( Nd.giveSize(), Bu.giveNumberOfColumns() );
             }
         }
+
+	gdmat->giveGradientDamageStiffnessMatrix_du_BB(Ddu_BB, rMode, gp, tStep);
+        if ( Ddu_BB.giveNumberOfRows() > 0 ) {
+  	    this->computeBdMatrixAt(gp, Bd);
+            DduB.beProductOf(Ddu_BB, Bu);
+            answer.plusProductUnsym(Bd, DduB, dV);
+        }
+
+	
     }
 }
 
