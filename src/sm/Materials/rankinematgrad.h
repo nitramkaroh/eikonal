@@ -62,8 +62,6 @@ protected:
      *  between initializeFrom and giveInputRecord methods is lost.
      */
 
-
-    double kappa_nl;
     double kappa_hat;
 
 public:
@@ -79,10 +77,9 @@ public:
     virtual void initTempStatus();
     virtual void updateYourself(TimeStep *tStep);
 
-    void setKappa_nl(double kap) { kappa_nl = kap; }
     void setKappa_hat(double kap) { kappa_hat = kap; }
-    double giveKappa_nl() { return kappa_nl; }
     double giveKappa_hat() { return kappa_hat; }
+    
     virtual double giveNonlocalCumulatedStrain() { return nonlocalDamageDrivingVariable; }
     virtual void setNonlocalCumulatedStrain(double nonlocalCumulatedStrain) { this->nonlocalDamageDrivingVariable = nonlocalCumulatedStrain; }
 };
@@ -94,7 +91,6 @@ public:
 class RankineMatGrad : public RankineMat, GradientDamageMaterialExtensionInterface
 {
 protected:
-    double L;
     double mParam;
     double negligible_damage;
 

@@ -503,7 +503,7 @@ RankineMatGrad :: givePlaneStressStiffMtrx(FloatMatrix &answer, MatResponseMode 
 void
 RankineMatGrad :: giveNonlocalInternalForces_N_factor(double &answer, double nlDamageDrivingVariable, GaussPoint *gp, TimeStep *tStep)
 {
-    // I modified this one to put pnl -p instead of just pnl
+    // I modified this one to put pnl-p instead of just pnl
     RankineMatGradStatus *status = static_cast< RankineMatGradStatus * >( this->giveStatus(gp) );
     double localCumulatedStrain = status->giveTempCumulativePlasticStrain();
     double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
@@ -545,10 +545,11 @@ RankineMatGrad :: giveRealStressVectorGradientDamage(FloatArray &stress, double 
     double tempDamage;
     RankineMat :: performPlasticityReturn(gp, totalStrain);
     status->setNonlocalCumulatedStrain(nonlocalCumulatedPlasticStrain);
+    localCumulatedPlasticStrain = status->giveTempCumulativePlasticStrain();
     tempDamage = computeDamage(gp, tStep);
     const FloatArray &tempEffStress = status->giveTempEffectiveStress();
     stress.beScaled(1.0 - tempDamage, tempEffStress);
-    localCumulatedPlasticStrain = status->giveTempCumulativePlasticStrain();
+
 
     status->letTempStrainVectorBe(totalStrain);
     status->setTempDamage(tempDamage);
@@ -559,7 +560,6 @@ RankineMatGrad :: giveRealStressVectorGradientDamage(FloatArray &stress, double 
     status->computeWork_PlaneStress(gp, gf);
 #endif
     double khat = mParam * nonlocalCumulatedPlasticStrain + ( 1. - mParam ) * localCumulatedPlasticStrain;
-    status->setKappa_nl(nonlocalCumulatedPlasticStrain);
     status->setKappa_hat(khat);
 }
 
@@ -669,7 +669,7 @@ RankineMatGradStatus :: printOutputAt(FILE *file, TimeStep *tStep)
     StructuralMaterialStatus :: printOutputAt(file, tStep);
 
     fprintf(file, "status {");
-    fprintf(file, "damage %g, kappa %g, kappa_nl %g, kappa_hat %g", damage, kappa, kappa_nl, kappa_hat);
+    fprintf(file, "damage %g, kappa %g, kappa_nl %g, kappa_hat %g", damage, kappa, nonlocalDamageDrivingVariable, kappa_hat);
 #ifdef keep_track_of_dissipated_energy
     fprintf(file, ", dissW %g, freeE %g, stressW %g", this->dissWork, ( this->stressWork ) - ( this->dissWork ), this->stressWork);
 #endif
@@ -697,7 +697,6 @@ RankineMatGradStatus :: initTempStatus()
     tempPlasticStrain = plasticStrain;
     tempKappa = kappa;
 
-    kappa_nl = 0.; // only containers
     kappa_hat = 0.;
 }
 
