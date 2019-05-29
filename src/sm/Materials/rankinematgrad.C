@@ -129,7 +129,7 @@ RankineMatGrad :: giveGradientDamageStiffnessMatrix_uu(FloatMatrix &answer, MatR
             if ( tempDamage - damage <= negligible_damage ) {
                 gprime = 0.;
             } else {
-                double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
+                double nonlocalCumulatedStrain = status->giveTempNonlocalCumulativePlasticStrain();
                 double tempLocalCumulatedStrain = status->giveTempCumulativePlasticStrain();
                 double overNonlocalCumulatedStrain = mParam * nonlocalCumulatedStrain + ( 1. - mParam ) * tempLocalCumulatedStrain;
                 gprime = computeDamageParamPrime(overNonlocalCumulatedStrain);
@@ -164,25 +164,26 @@ RankineMatGrad :: giveGradientDamageStiffnessMatrix_ud(FloatMatrix &answer, MatR
             return;
         }
 
-        double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
-        double tempCumulatedStrain = status->giveTempCumulativePlasticStrain();
-        double overNonlocalCumulatedStrain = mParam * nonlocalCumulatedStrain + ( 1. - mParam ) * tempCumulatedStrain;
+        double nonlocalCumulativePlasticStrain = status->giveTempNonlocalCumulativePlasticStrain();
+        double localCumulativePlasticStrain = status->giveTempCumulativePlasticStrain();
+        double overNonlocalCumulativePlasticStrain = mParam * nonlocalCumulativePlasticStrain + ( 1. - mParam ) * localCumulativePlasticStrain;
         const FloatArray &tempEffStress = status->giveTempEffectiveStress();
         answer.at(1, 1) = tempEffStress.at(1);
         answer.at(2, 1) = tempEffStress.at(2);
         answer.at(3, 1) = tempEffStress.at(3);
-        double gPrime = computeDamageParamPrime(overNonlocalCumulatedStrain);
+        double gPrime = computeDamageParamPrime(overNonlocalCumulativePlasticStrain);
         answer.times(- gPrime * mParam);
 
 
 
-	double lddv;
+	/*	double lddv;
 	FloatArray strainP, stressP, oldStrain, oldStress;
 	oldStress = status->giveTempStressVector();
 	oldStrain = status->giveTempStrainVector();
-	/*double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
+	double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
 	double localCumulatedStrain = status->giveTempCumulativePlasticStrain();
-	double overNonlocalCumulatedStrain = mParam * nonlocalCumulatedStrain + ( 1. - mParam ) * localCumulatedStrain;	*/
+	double overNonlocalCumulatedStrain = mParam * nonlocalCumulatedStrain + ( 1. - mParam ) * localCumulatedStrain;
+	
 	double mddv = nonlocalCumulatedStrain;
 	double pert = 1.e-6 * mddv;
 	strainP = oldStrain;
@@ -192,7 +193,7 @@ RankineMatGrad :: giveGradientDamageStiffnessMatrix_ud(FloatMatrix &answer, MatR
 	stiff.resize(3,1);
 	stiff.at(1,1) = ( stressP.at(1) - oldStress.at(1) )/pert;
 	this->giveRealStressVectorGradientDamage(stressP, lddv, gp, oldStrain, mddv, tStep);
-
+	*/
 
 
 
@@ -265,7 +266,7 @@ RankineMatGrad :: giveGradientDamageStiffnessMatrix_du(FloatMatrix &answer, MatR
         answer.at(3, 1) = -etaglob.at(3);
 
 
-	double lddv;
+	/*	double lddv;
 	FloatArray strainP, stressP, oldStrain, oldStress;
 	oldStress = status->giveTempStressVector();
 	oldStrain = status->giveTempStrainVector();
@@ -281,18 +282,18 @@ RankineMatGrad :: giveGradientDamageStiffnessMatrix_du(FloatMatrix &answer, MatR
 	stiff.resize(3,1);
 	stiff.at(1,1) = ( lddv - localCumulatedStrain )/pert;
 	this->giveRealStressVectorGradientDamage(stressP, lddv, gp, oldStrain, mddv, tStep);
-
+	*/
 
 	
 	if ( gradientDamageFormulationType  == GDFT_Eikonal ) {
 	  double iA = this->computeEikonalInternalLength_a(gp);
 	  if ( iA != 0 ) {
-	    double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
-	    double localCumulatedStrain = status->giveTempCumulativePlasticStrain();
-	    double overNonlocalCumulatedStrain = mParam * nonlocalCumulatedStrain + ( 1. - mParam ) * localCumulatedStrain;
+	    double nonlocalCumulativePlasticStrain = status->giveTempNonlocalCumulativePlasticStrain();
+	    double localCumulativePlasticStrain = status->giveTempCumulativePlasticStrain();
+	    double overNonlocalCumulativePlasticStrain = mParam * nonlocalCumulativePlasticStrain + ( 1. - mParam ) * localCumulativePlasticStrain;
 	    double iAPrime = this->computeEikonalInternalLength_aPrime(gp);
-	    double gPrime = this->computeDamageParamPrime(overNonlocalCumulatedStrain);
-	    double factor = (1. - mParam ) * iAPrime * gPrime * (localCumulatedStrain - nonlocalCumulatedStrain ) / ( iA * iA );           
+	    double gPrime = this->computeDamageParamPrime(overNonlocalCumulativePlasticStrain);
+	    double factor = (1. - mParam ) * iAPrime * gPrime * (localCumulativePlasticStrain - nonlocalCumulativePlasticStrain ) / ( iA * iA );           
 	    answer.times( 1. / iA - factor);
 	  }
 	}
@@ -365,7 +366,7 @@ RankineMatGrad :: giveGradientDamageStiffnessMatrix_du_BB(FloatMatrix &answer, M
             FloatArray etaglob(3);
             etaglob.beProductOf(T, eta);
 
-            FloatArray GradP = status->giveTempNonlocalDamageDrivingVariableGrad();
+            FloatArray GradP = status->giveTempNonlocalCumulativePlasticStrainGrad();
             answer.beDyadicProductOf(GradP, etaglob);
             double iBPrime = this->computeEikonalInternalLength_bPrime(gp);
             double gPrime = this->computeDamageParamPrime(tempKappa);
@@ -398,13 +399,14 @@ RankineMatGrad :: giveGradientDamageStiffnessMatrix_dd_NN(FloatMatrix &answer, M
                 answer.at(1, 1) += 1. / iA;
             }
             if ( mode == TangentStiffness ) {
-                double tempKappa = status->giveTempCumulativePlasticStrain();
-                if ( tempKappa > status->giveCumulativePlasticStrain() && iA != 0 ) {
+                double localCumulativePlasticStrain = status->giveTempCumulativePlasticStrain();
+                if ( localCumulativePlasticStrain > status->giveCumulativePlasticStrain() && iA != 0 ) {
                     double iAPrime = this->computeEikonalInternalLength_aPrime(gp);
-                    double gPrime = this->computeDamageParamPrime(tempKappa);
-                    double LocalCumulatedStrain = status->giveTempLocalDamageDrivingVariable();
-                    double NonLocalCumulatedStrain = status->giveTempNonlocalDamageDrivingVariable();
-                    answer.at(1, 1) += iAPrime / iA / iA * gPrime * mParam * ( LocalCumulatedStrain - NonLocalCumulatedStrain );
+		    double nonlocalCumulativePlasticStrain = status->giveTempNonlocalCumulativePlasticStrain();
+		    double overNonlocalCumulativePlasticStrain = mParam * nonlocalCumulativePlasticStrain + ( 1. - mParam ) * localCumulativePlasticStrain;
+		    
+                    double gPrime = this->computeDamageParamPrime(overNonlocalCumulativePlasticStrain);
+                    answer.at(1, 1) -= iAPrime / iA / iA * gPrime * mParam * ( nonlocalCumulativePlasticStrain - localCumulativePlasticStrain );
                 }
             }
         } else {
@@ -452,13 +454,13 @@ RankineMatGrad :: giveGradientDamageStiffnessMatrix_dd_BN(FloatMatrix &answer, M
         case _PlaneStress:
         {
             RankineMatGradStatus *status = static_cast< RankineMatGradStatus * >( this->giveStatus(gp) );
-            FloatArray GradP = status->giveTempNonlocalDamageDrivingVariableGrad();
+            FloatArray GradP = status->giveTempNonlocalCumulativePlasticStrainGrad();
             answer = GradP;
             double iBPrime = this->computeEikonalInternalLength_bPrime(gp);
-	    double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
-	    double tempLocalCumulatedStrain = status->giveTempCumulativePlasticStrain();
-	    double overNonlocalCumulatedStrain = mParam * nonlocalCumulatedStrain + ( 1. - mParam ) * tempLocalCumulatedStrain;
-            double gPrime = this->computeDamageParamPrime(overNonlocalCumulatedStrain);
+	    double nonlocalCumulativePlasticStrain = status->giveTempNonlocalCumulativePlasticStrain();
+	    double localCumulativePlasticStrain = status->giveTempCumulativePlasticStrain();
+	    double overNonlocalCumulativePlasticStrain = mParam * nonlocalCumulativePlasticStrain + ( 1. - mParam ) * localCumulativePlasticStrain;
+            double gPrime = this->computeDamageParamPrime(overNonlocalCumulativePlasticStrain);
             answer.times(iBPrime * gPrime * mParam);
             break;
         }
@@ -489,7 +491,7 @@ RankineMatGrad :: givePlaneStressStiffMtrx(FloatMatrix &answer, MatResponseMode 
     if ( tempDamage - damage <= negligible_damage ) {
         gprime = 0.;
     } else {
-        double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
+        double nonlocalCumulatedStrain = status->giveTempNonlocalCumulativePlasticStrain();
         double tempLocalCumulatedStrain = status->giveTempCumulativePlasticStrain();
         double overNonlocalCumulatedStrain = mParam * nonlocalCumulatedStrain + ( 1. - mParam ) * tempLocalCumulatedStrain;
         gprime = computeDamageParamPrime(overNonlocalCumulatedStrain);
@@ -505,9 +507,9 @@ RankineMatGrad :: giveNonlocalInternalForces_N_factor(double &answer, double nlD
 {
     // I modified this one to put pnl-p instead of just pnl
     RankineMatGradStatus *status = static_cast< RankineMatGradStatus * >( this->giveStatus(gp) );
-    double localCumulatedStrain = status->giveTempCumulativePlasticStrain();
-    double nonlocalCumulatedStrain = status->giveNonlocalCumulatedStrain();
-    answer = nonlocalCumulatedStrain - localCumulatedStrain;
+    double localCumulativePlasticStrain = status->giveTempCumulativePlasticStrain();
+    double nonlocalCumulativePlasticStrain = status->giveTempNonlocalCumulativePlasticStrain();
+    answer = nonlocalCumulativePlasticStrain - localCumulativePlasticStrain;
     if ( gradientDamageFormulationType == GDFT_Eikonal ) {
         double iA = this->computeEikonalInternalLength_a(gp);
         if ( iA != 0 ) {
@@ -536,7 +538,7 @@ RankineMatGrad :: computeLocalDamageDrivingVariable(double &answer, GaussPoint *
 }
 
 void
-RankineMatGrad :: giveRealStressVectorGradientDamage(FloatArray &stress, double &localCumulatedPlasticStrain, GaussPoint *gp, const FloatArray &totalStrain, double nonlocalCumulatedPlasticStrain, TimeStep *tStep)
+RankineMatGrad :: giveRealStressVectorGradientDamage(FloatArray &stress, double &localCumulativePlasticStrain, GaussPoint *gp, const FloatArray &totalStrain, double nonlocalCumulativePlasticStrain, TimeStep *tStep)
 {
     RankineMatGradStatus *status = static_cast< RankineMatGradStatus * >( this->giveStatus(gp) );
 
@@ -544,8 +546,8 @@ RankineMatGrad :: giveRealStressVectorGradientDamage(FloatArray &stress, double 
 
     double tempDamage;
     RankineMat :: performPlasticityReturn(gp, totalStrain);
-    status->setNonlocalCumulatedStrain(nonlocalCumulatedPlasticStrain);
-    localCumulatedPlasticStrain = status->giveTempCumulativePlasticStrain();
+    status->setTempNonlocalCumulativePlasticStrain(nonlocalCumulativePlasticStrain);
+    localCumulativePlasticStrain = status->giveTempCumulativePlasticStrain();
     tempDamage = computeDamage(gp, tStep);
     const FloatArray &tempEffStress = status->giveTempEffectiveStress();
     stress.beScaled(1.0 - tempDamage, tempEffStress);
@@ -559,7 +561,7 @@ RankineMatGrad :: giveRealStressVectorGradientDamage(FloatArray &stress, double 
     double gf = sig0 * sig0 / E; // only estimated, but OK for this purpose
     status->computeWork_PlaneStress(gp, gf);
 #endif
-    double khat = mParam * nonlocalCumulatedPlasticStrain + ( 1. - mParam ) * localCumulatedPlasticStrain;
+    double khat = mParam * nonlocalCumulativePlasticStrain + ( 1. - mParam ) * localCumulativePlasticStrain;
     status->setKappa_hat(khat);
 }
 
@@ -568,24 +570,19 @@ RankineMatGrad :: computeCumPlastStrain(double &kappa, GaussPoint *gp, TimeStep 
 {
     RankineMatGradStatus *status = static_cast< RankineMatGradStatus * >( this->giveStatus(gp) );
     double localCumPlastStrain = status->giveTempCumulativePlasticStrain();
-    double nlCumPlastStrain = status->giveNonlocalCumulatedStrain();
+    double nlCumPlastStrain = status->giveTempNonlocalCumulativePlasticStrain();
     kappa = mParam * nlCumPlastStrain + ( 1. - mParam ) * localCumPlastStrain;
 }
 
-double
-RankineMatGrad :: giveNonlocalCumPlasticStrain(GaussPoint *gp)
-{
-    RankineMatGradStatus *status = static_cast< RankineMatGradStatus * >( this->giveStatus(gp) );
-    return status->giveNonlocalCumulatedStrain();
-}
 
-
+  
 int
 RankineMatGrad :: giveIPValue(FloatArray &answer, GaussPoint *gp, InternalStateType type, TimeStep *tStep)
 {
     if ( type == IST_CumPlasticStrain_2 ) {
         answer.resize(1);
-        answer.at(1) = giveNonlocalCumPlasticStrain(gp);
+	 RankineMatGradStatus *status = static_cast< RankineMatGradStatus * >( this->giveStatus(gp) );
+        answer.at(1) = status->giveTempNonlocalCumulativePlasticStrain();
         return 1;
     } else if ( type == IST_MaxEquivalentStrainLevel ) {
         answer.resize(1);
@@ -660,7 +657,8 @@ RankineMatGrad :: giveDimension(GaussPoint *gp)
 RankineMatGradStatus :: RankineMatGradStatus(GaussPoint *g) :
     RankineMatStatus(g)
 {
-    nonlocalDamageDrivingVariable = 0;
+  nonlocalCumulativePlasticStrain = 0;
+  tempNonlocalCumulativePlasticStrain = 0;
 }
 
 void
@@ -669,7 +667,7 @@ RankineMatGradStatus :: printOutputAt(FILE *file, TimeStep *tStep)
     StructuralMaterialStatus :: printOutputAt(file, tStep);
 
     fprintf(file, "status {");
-    fprintf(file, "damage %g, kappa %g, kappa_nl %g, kappa_hat %g", damage, kappa, nonlocalDamageDrivingVariable, kappa_hat);
+    fprintf(file, "damage %g, kappa %g, kappa_nl %g, kappa_hat %g", damage, kappa, nonlocalCumulativePlasticStrain, kappa_hat);
 #ifdef keep_track_of_dissipated_energy
     fprintf(file, ", dissW %g, freeE %g, stressW %g", this->dissWork, ( this->stressWork ) - ( this->dissWork ), this->stressWork);
 #endif
@@ -680,24 +678,9 @@ RankineMatGradStatus :: printOutputAt(FILE *file, TimeStep *tStep)
 void
 RankineMatGradStatus :: initTempStatus()
 {
-    // RankineMatStatus::initTempStatus();
-    StructuralMaterialStatus :: initTempStatus();
-
-    if ( plasticStrain.giveSize() == 0 ) {
-        if ( gp->giveMaterialMode() == _PlaneStress ) {
-            plasticStrain.resize( StructuralMaterial :: giveSizeOfVoigtSymVector(_PlaneStress) );
-        } else if ( gp->giveMaterialMode() == _3dMat ) {
-            plasticStrain.resize( StructuralMaterial :: giveSizeOfVoigtSymVector(_3dMat) );
-        }
-
-        plasticStrain.zero();
-    }
-
-    tempDamage = damage;
-    tempPlasticStrain = plasticStrain;
-    tempKappa = kappa;
-
-    kappa_hat = 0.;
+    RankineMatStatus :: initTempStatus();
+    tempNonlocalCumulativePlasticStrain =  nonlocalCumulativePlasticStrain;
+    kappa_hat = 0.;  
 }
 
 
@@ -705,5 +688,7 @@ void
 RankineMatGradStatus :: updateYourself(TimeStep *tStep)
 {
     RankineMatStatus :: updateYourself(tStep);
+    nonlocalCumulativePlasticStrain = tempNonlocalCumulativePlasticStrain;
 }
+  
 } // end namespace oofem

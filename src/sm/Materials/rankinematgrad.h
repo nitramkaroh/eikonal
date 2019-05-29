@@ -52,17 +52,17 @@ namespace oofem {
 /**
  * Gradient rankine material status.
  */
-class RankineMatGradStatus : public RankineMatStatus, public GradientDamageMaterialStatusExtensionInterface
+class RankineMatGradStatus : public RankineMatStatus
 {
 protected:
 
-    /**  Type characterizing the dependence of the internal lenght on variable of the state
-     *  Note that the assigned numbers to enum values have to correspond to values
-     *  used in initializeFrom to resolve internalLenghtDependence. If not, the consistency
-     *  between initializeFrom and giveInputRecord methods is lost.
-     */
-
     double kappa_hat;
+    double tempNonlocalCumulativePlasticStrain;
+    double nonlocalCumulativePlasticStrain;
+    
+    FloatArray nonlocalCumulativePlasticStrainGrad;
+    FloatArray tempNonlocalCumulativePlasticStrainGrad;
+
 
 public:
 
@@ -80,8 +80,15 @@ public:
     void setKappa_hat(double kap) { kappa_hat = kap; }
     double giveKappa_hat() { return kappa_hat; }
     
-    virtual double giveNonlocalCumulatedStrain() { return nonlocalDamageDrivingVariable; }
-    virtual void setNonlocalCumulatedStrain(double nonlocalCumulatedStrain) { this->nonlocalDamageDrivingVariable = nonlocalCumulatedStrain; }
+    virtual double giveTempNonlocalCumulativePlasticStrain() { return tempNonlocalCumulativePlasticStrain; }
+    virtual void setTempNonlocalCumulativePlasticStrain(double nonlocalCumulativeStrain) { this->tempNonlocalCumulativePlasticStrain = nonlocalCumulativeStrain; }
+
+
+    const FloatArray &giveTempNonlocalCumulativePlasticStrainGrad() const { return tempNonlocalCumulativePlasticStrainGrad; }
+    virtual void letTempNonlocalCumulativePlasticStrainGradBe(const FloatArray &ncpsg) { this->tempNonlocalCumulativePlasticStrainGrad = ncpsg; }
+
+    
+    
 };
 
 
@@ -142,7 +149,6 @@ public:
     void givePlaneStressKappaMatrix(FloatMatrix &answer, MatResponseMode mode, GaussPoint *gp, TimeStep *tStep);
 
     virtual void computeCumPlastStrain(double &kappa, GaussPoint *gp, TimeStep *tStep);
-    double giveNonlocalCumPlasticStrain(GaussPoint *gp);
     void performPlasticityReturn(GaussPoint *gp, const FloatArray &totalStrain);
 
     LinearElasticMaterial *giveLinearElasticMaterial() { return linearElasticMaterial; }
