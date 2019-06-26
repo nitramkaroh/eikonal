@@ -32,8 +32,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "Elements/GradientDamage/PlaneStress/qtrplstrgraddamage.h"
-#include "fei2dtrlin.h"
+#include "../sm/Elements/PlaneStress/planestressgraddamage.h"
+#include "fei2dquadlin.h"
 #include "gausspoint.h"
 #include "gaussintegrationrule.h"
 #include "floatmatrix.h"
@@ -42,25 +42,18 @@
 #include "crosssection.h"
 #include "classfactory.h"
 
-#ifdef __OOFEG
- #include "oofeggraphiccontext.h"
-#endif
-
 namespace oofem {
-REGISTER_Element(QTrPlaneStressGradDamage);
+REGISTER_Element(PlaneStressGradDamage);
 
-FEI2dTrLin QTrPlaneStressGradDamage :: interpolation_lin(1, 2);
-IntArray QTrPlaneStressGradDamage :: locationArray_u = {1,2, 4,5, 7,8, 10,11,12,13,14,15};
-IntArray QTrPlaneStressGradDamage :: locationArray_d = {3,6,9};
-
-
+  IntArray PlaneStressGradDamage :: locationArray_u = {1,2, 4,5, 7,8, 10,11};
+  IntArray PlaneStressGradDamage :: locationArray_d = {3,6,9,12};
   
-QTrPlaneStressGradDamage :: QTrPlaneStressGradDamage(int n, Domain *aDomain) : QTrPlaneStress2d(n, aDomain), GradientDamageElement()
+PlaneStressGradDamage :: PlaneStressGradDamage(int n, Domain *aDomain) : PlaneStress2d(n, aDomain), GradDpElement()
     // Constructor.
 {
-    nPrimNodes = 6;
+    nPrimNodes = 4;
     nPrimVars = 2;
-    nSecNodes = 3;
+    nSecNodes = 4;
     nSecVars = 1;
     totalSize = nPrimVars * nPrimNodes + nSecVars * nSecNodes;
     locSize   = nPrimVars * nPrimNodes;
@@ -70,10 +63,9 @@ QTrPlaneStressGradDamage :: QTrPlaneStressGradDamage(int n, Domain *aDomain) : Q
 
 
 void
-QTrPlaneStressGradDamage :: giveDofManDofIDMask(int inode, IntArray &answer) const
-
+PlaneStressGradDamage :: giveDofManDofIDMask(int inode, IntArray &answer) const
 {
-    if ( inode <= 3 ) {
+    if ( inode <= 4 ) {
         answer = {D_u, D_v, G_0};
     } else {
         answer = {D_u, D_v};
@@ -81,83 +73,79 @@ QTrPlaneStressGradDamage :: giveDofManDofIDMask(int inode, IntArray &answer) con
 }
 
 
+
   void
-QTrPlaneStressGradDamage :: giveDofManDofIDMask_u(IntArray &answer) const
+PlaneStressGradDamage :: giveDofManDofIDMask_u(IntArray &answer) const
 {
   answer = {D_u, D_v};
 }
 
 
 void
-QTrPlaneStressGradDamage :: giveDofManDofIDMask_d(IntArray &answer) const
+PlaneStressGradDamage :: giveDofManDofIDMask_d(IntArray &answer) const
 {
-  /*
-  if ( inode <= 3 ) {
     answer = {G_0};
-  } else {
-    answer = {};
-  }
-  */
 }
-
-
 
   
 
+
 IRResultType
-QTrPlaneStressGradDamage :: initializeFrom(InputRecord *ir)
+PlaneStressGradDamage :: initializeFrom(InputRecord *ir)
 {
-    return QTrPlaneStress2d :: initializeFrom(ir);
+    return PlaneStress2d :: initializeFrom(ir);
 }
 
 
 void
-QTrPlaneStressGradDamage :: computeGaussPoints()
+PlaneStressGradDamage :: computeGaussPoints()
 {
-    if ( integrationRulesArray.size() == 0 ) {
+      if ( integrationRulesArray.size() == 0 ) {
         integrationRulesArray.resize( 1 );
-        integrationRulesArray [ 0 ].reset( new GaussIntegrationRule(1, this, 1, 3) );
+        integrationRulesArray [ 0 ] = new GaussIntegrationRule(1, this, 1, 3);
         this->giveCrossSection()->setupIntegrationPoints(* integrationRulesArray [ 0 ], numberOfGaussPoints, this);
     }
+
 }
 
 void
-QTrPlaneStressGradDamage :: computeNdMatrixAt(GaussPoint *gp, FloatArray &answer)
+PlaneStressGradDamage :: computeNkappaMatrixAt(GaussPoint *gp, FloatMatrix &answer)
 {
-    this->interpolation_lin.evalN( answer, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+  FloatArray n;
+  this->interpolation.evalN(n, *gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+  answer.beNMatrixOf(n, 1);
 }
 
 void
-QTrPlaneStressGradDamage :: computeBdMatrixAt(GaussPoint *gp, FloatMatrix &answer)
+PlaneStressGradDamage :: computeBkappaMatrixAt(GaussPoint *gp, FloatMatrix &answer)
 {
     FloatMatrix dnx;
-    this->interpolation_lin.evaldNdx( dnx, gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
+    this->interpolation.evaldNdx( dnx, *gp->giveNaturalCoordinates(), FEIElementGeometryWrapper(this) );
     answer.beTranspositionOf(dnx);
 }
 
+
 void
-QTrPlaneStressGradDamage :: giveLocationArray_u(IntArray &answer)
+PlaneStressGradDamage :: giveLocationArray_u(IntArray &answer)
 {
   answer = locationArray_u;
 }
 
   
 void
-QTrPlaneStressGradDamage :: giveLocationArray_d(IntArray &answer)
+PlaneStressGradDamage :: giveLocationArray_d(IntArray &answer)
 {
   answer = locationArray_d;
 }
 
-  
 
 void
-QTrPlaneStressGradDamage :: postInitialize()
+PlaneStressGradDamage :: postInitialize()
 {
-  GradientDamageElement:: postInitialize();
-  QTrPlaneStress2d :: postInitialize();
+  //GradDpElement :: postInitialize();
+  PlaneStress2d :: postInitialize();
 }
 
 
-  
-}
 
+}
